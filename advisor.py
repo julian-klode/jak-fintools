@@ -1,3 +1,5 @@
+import itertools
+import decimal
 import math
 from tabulate import tabulate
 import collections
@@ -40,15 +42,32 @@ def calculate_distance(allocation):
     return math.sqrt(sum(diff**2 for diff in diffs))
 
 
-def buy(values, etf, value):
-    """Buy the given ETF for the given value.
+def buy(values, etfs, value):
+    """Buy the given ETFs for the given value.
 
-    Returns a new allocation."""
+    Returns a new allocation. The new allocation will have an overall
+    value of the of allocation + the value to be allocated."""
+    total = sum(values.values()) + value
+    fixed = sum(values[k] for k in values if k not in etfs)
+    free = total - fixed
+
+    # The optimal allocation given the entire asset value
+    optimum = {k: target[k].tgt / 100 * total for k in target}
+    # Amount to multiply target allocation with to get the same relative
+    # allocation for the given etfs from the free money.
+    optimum_multiplier = free / sum(optimum[k] for k in etfs)
+
     new_values = dict(values)
-    try:
-        new_values[etf] += value
-    except KeyError:
-        new_values[etf] = value
+    for etf in etfs:
+        val = int(optimum[etf] * optimum_multiplier)
+        new_values[etf] = val
+        free -= val
+
+    # Something was incomplete, let's add the remainder of the free amount to
+    # the largest free position.
+    if free:
+        new_values[max(etfs, key=lambda k: target[k].tgt)] += free
+
     return new_values
 
 
@@ -56,6 +75,7 @@ def main():
     value = 0
     invest = 1000
     rounds = 100
+    num_transactions = 1
 
     values = {}
     etfs = set(target.keys())
@@ -63,7 +83,8 @@ def main():
             [k for k in sorted(target, key=lambda k: target[k].tgt, reverse=True)]]
 
     for i in range(rounds):
-        choices = [(etf, buy(values, etf, invest)) for etf in sorted(etfs)]
+        choices = [(", ".join(etfs), buy(values, etfs, invest))
+                   for etfs in itertools.combinations(sorted(etfs), num_transactions)]
         choice_buy, choice = min(choices, key=lambda choice: (
             not is_valid(choice[1]), calculate_distance(choice[1])))
 
