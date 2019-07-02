@@ -1,6 +1,7 @@
 import itertools
 import decimal
 import math
+import typing
 from tabulate import tabulate
 import collections
 
@@ -14,8 +15,10 @@ target = {
     "world sc": Position(0, 13, 15),
 }
 
+Allocation = typing.Dict[str, float]
 
-def is_valid(allocation):
+
+def is_valid(allocation: Allocation) -> bool:
     """Check if an allocation is valid.
 
     An allocation is considered valid if each of its positions is within its
@@ -30,7 +33,7 @@ def is_valid(allocation):
     return True
 
 
-def calculate_distance(allocation):
+def calculate_distance(allocation: Allocation) -> float:
     """Calculate score of a given allocation.
 
     The score of a given allocation is the euclidean distance between
@@ -42,7 +45,7 @@ def calculate_distance(allocation):
     return math.sqrt(sum(diff**2 for diff in diffs))
 
 
-def buy(values, etfs, value):
+def buy(values: Allocation, etfs: typing.Iterable[str], value: float) -> Allocation:
     """Buy the given ETFs for the given value.
 
     Returns a new allocation. The new allocation will have an overall
@@ -75,16 +78,16 @@ def buy(values, etfs, value):
     return new_values
 
 
-def main():
+def main() -> None:
     value = 0
     invest = 1000
     rounds = 100
     num_transactions = 1
 
-    values = {}
+    values: Allocation = {}
     etfs = set(target.keys())
-    rows = [["iteration", "buy"] +
-            [k for k in sorted(target, key=lambda k: target[k].tgt, reverse=True)]]
+    rows: typing.List[typing.Iterable[object]] = [["iteration", "buy"] +
+                                                  [k for k in sorted(target, key=lambda k: target[k].tgt, reverse=True)]]
 
     for i in range(rounds):
         choices = [(", ".join(etfs), buy(values, etfs, invest))
