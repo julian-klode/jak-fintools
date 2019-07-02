@@ -59,7 +59,11 @@ def buy(values, etfs, value):
 
     new_values = dict(values)
     for etf in etfs:
-        val = int(optimum[etf] * optimum_multiplier)
+        # Calculate the value for this ETF, and clamp it to within its limits
+        val = optimum[etf] * optimum_multiplier
+        val = min(val, target[etf].max * total / 100)
+        val = max(val, target[etf].min * total / 100)
+        val = int(val)
         new_values[etf] = val
         free -= val
 
