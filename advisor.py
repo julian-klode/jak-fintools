@@ -15,7 +15,7 @@ target = {
     "world sc": Position(0, 13, 15),
 }
 
-Allocation = typing.Dict[str, float]
+Allocation = typing.NewType("Allocation", typing.Dict[str, float])
 
 
 def is_valid(allocation: Allocation) -> bool:
@@ -60,7 +60,7 @@ def buy(values: Allocation, etfs: typing.Iterable[str], value: float) -> Allocat
     # allocation for the given etfs from the free money.
     optimum_multiplier = free / sum(optimum[k] for k in etfs)
 
-    new_values = dict(values)
+    new_values = Allocation(values.copy())
     for etf in etfs:
         # Calculate the value for this ETF, and clamp it to within its limits
         val = optimum[etf] * optimum_multiplier
@@ -84,7 +84,7 @@ def main() -> None:
     rounds = 100
     num_transactions = 1
 
-    values: Allocation = {}
+    values = Allocation({})
     etfs = set(target.keys())
     rows: typing.List[typing.Iterable[object]] = [["iteration", "buy"] +
                                                   [k for k in sorted(target, key=lambda k: target[k].tgt, reverse=True)]]
