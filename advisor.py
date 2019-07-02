@@ -1,47 +1,86 @@
 import math
 from tabulate import tabulate
-split = {
-	"world": 0.7,
-	"em": 0.2,
-	"emu sc": 0.1,
+import collections
+
+
+Position = collections.namedtuple('Position', ['min', 'tgt', 'max'])
+
+
+target = {
+    "world": Position(70, 77, 100),
+    "em imi": Position(0, 10, 15),
+    "world sc": Position(0, 13, 15),
 }
 
-value = 0
-invest = 1000
-rounds=100
 
-values = {}
-etfs=set(split.keys())
-rows = [["iteration", "buy"] + [k for k in sorted(split, key=lambda k: split[k], reverse=True)]]
+def is_valid(allocation):
+    """Check if an allocation is valid.
 
-for i in range(rounds):
-	choice, choice_score = {}, 0
-
-	for etf in etfs:
-		new_values = dict(values)
-		try:
-			new_values[etf] += invest
-		except KeyError:
-			new_values[etf] = invest
+    An allocation is considered valid if each of its positions is within its
+    specified range.
+    """
+    total = sum(allocation.values())
+    for name, value in allocation.items():
+        position = target[name]
+        percentage = value / total * 100
+        if percentage > position.max or percentage < position.min:
+            return False
+    return True
 
 
-		total = sum(v for v in new_values.values())
-		percentages = {k: v/total for k, v in new_values.items()}
-		diffs = score= {k: (split[k] - percentages.get(k, 0)) for k in split}
-		# Euclidian distance of our allocation vector * the weights (1/split)
-		score= math.sqrt(sum(1/split[k]*diffs[k]**2 for k in diffs))
-		if score < choice_score or not choice:
-			choice = new_values
-			choice_score = score
-			choice_percentages = percentages
-			choice_buy = etf
-		
-		#print("CHOICE", new_values, percentages, diffs, score)
+def calculate_distance(allocation):
+    """Calculate score of a given allocation.
+
+    The score of a given allocation is the euclidean distance between
+    the specified allocation and the target allocation. The lower the
+    score, the better."""
+    total = sum(allocation.values())
+    diffs = (target[k].tgt - allocation.get(k, 0) /
+             total * 100 for k in target)
+    return math.sqrt(sum(diff**2 for diff in diffs))
 
 
-	#print(i+1, "BUY", choice_buy, choice, choice_percentages)
-	row = [i + 1, choice_buy ] + ["%s (%.2f%%)" % (choice.get(k, "-"), 100 * choice_percentages.get(k, 0)) for k in sorted(split, key=lambda k: split[k], reverse=True)]
-	rows.append(row)
-	values = choice
+def buy(values, etf, value):
+    """Buy the given ETF for the given value.
 
-print(tabulate(rows, headers="firstrow"))
+    Returns a new allocation."""
+    new_values = dict(values)
+    try:
+        new_values[etf] += value
+    except KeyError:
+        new_values[etf] = value
+    return new_values
+
+
+def main():
+    value = 0
+    invest = 1000
+    rounds = 100
+
+    values = {}
+    etfs = set(target.keys())
+    rows = [["iteration", "buy"] +
+            [k for k in sorted(target, key=lambda k: target[k].tgt, reverse=True)]]
+
+    for i in range(rounds):
+        choices = [(etf, buy(values, etf, invest)) for etf in sorted(etfs)]
+        choice_buy, choice = min(choices, key=lambda choice: (
+            not is_valid(choice[1]), calculate_distance(choice[1])))
+
+        if not is_valid(choice):
+            print("ERROR: Cannot proceed at iteration {}, no valid choices", i)
+
+        if values == choice:
+            print("ERROR")
+            break
+        total = sum(choice.values())
+        row = [i + 1, choice_buy] + ["%s (%.2f%%)" % (choice.get(k, "-"), choice.get(
+            k, 0) / total * 100) for k in sorted(target, key=lambda k: target[k], reverse=True)]
+        rows.append(row)
+        values = choice
+
+    print(tabulate(rows, headers="firstrow"))
+
+
+if __name__ == '__main__':
+    main()
