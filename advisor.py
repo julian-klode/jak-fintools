@@ -6,8 +6,10 @@ from tabulate import tabulate
 import collections
 
 
-Position = collections.namedtuple('Position', ['min', 'tgt', 'max'])
-
+class Position(typing.NamedTuple):
+    min : int
+    tgt : int
+    max : int
 
 target = {
     "world": Position(70, 77, 100),
