@@ -7,9 +7,10 @@ import collections
 
 
 class Position(typing.NamedTuple):
-    min : int
-    tgt : int
-    max : int
+    min: int
+    tgt: int
+    max: int
+
 
 target = {
     "world": Position(70, 77, 100),
@@ -42,9 +43,8 @@ def calculate_distance(allocation: Allocation) -> float:
     the specified allocation and the target allocation. The lower the
     score, the better."""
     total = sum(allocation.values())
-    diffs = (target[k].tgt - allocation.get(k, 0) /
-             total * 100 for k in target)
-    return math.sqrt(sum(diff**2 for diff in diffs))
+    diffs = (target[k].tgt - allocation.get(k, 0) / total * 100 for k in target)
+    return math.sqrt(sum(diff ** 2 for diff in diffs))
 
 
 def buy(values: Allocation, etfs: typing.Iterable[str], value: float) -> Allocation:
@@ -88,14 +88,20 @@ def main() -> None:
 
     values = Allocation({})
     etfs = set(target.keys())
-    rows: typing.List[typing.Iterable[object]] = [["iteration", "buy"] +
-                                                  [k for k in sorted(target, key=lambda k: target[k].tgt, reverse=True)]]
+    rows: typing.List[typing.Iterable[object]] = [
+        ["iteration", "buy"]
+        + [k for k in sorted(target, key=lambda k: target[k].tgt, reverse=True)]
+    ]
 
     for i in range(rounds):
-        choices = [(", ".join(etfs), buy(values, etfs, invest))
-                   for etfs in itertools.combinations(sorted(etfs), num_transactions)]
-        choice_buy, choice = min(choices, key=lambda choice: (
-            not is_valid(choice[1]), calculate_distance(choice[1])))
+        choices = [
+            (", ".join(etfs), buy(values, etfs, invest))
+            for etfs in itertools.combinations(sorted(etfs), num_transactions)
+        ]
+        choice_buy, choice = min(
+            choices,
+            key=lambda choice: (not is_valid(choice[1]), calculate_distance(choice[1])),
+        )
 
         if not is_valid(choice):
             print("ERROR: Cannot proceed at iteration {}, no valid choices", i)
@@ -104,13 +110,15 @@ def main() -> None:
             print("ERROR")
             break
         total = sum(choice.values())
-        row = [i + 1, choice_buy] + ["%s (%.2f%%)" % (choice.get(k, "-"), choice.get(
-            k, 0) / total * 100) for k in sorted(target, key=lambda k: target[k], reverse=True)]
+        row = [i + 1, choice_buy] + [
+            "%s (%.2f%%)" % (choice.get(k, "-"), choice.get(k, 0) / total * 100)
+            for k in sorted(target, key=lambda k: target[k], reverse=True)
+        ]
         rows.append(row)
         values = choice
 
     print(tabulate(rows, headers="firstrow"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
