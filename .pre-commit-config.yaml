@@ -29,3 +29,9 @@ repos:
     -   id: pylint
         args: [-dunsupported-assignment-operation]
         additional_dependencies: [tabulate]
+
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v1.22.1
+    hooks:
+    -   id: pyupgrade
+        args: [--py36-plus]

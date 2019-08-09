@@ -114,7 +114,7 @@ def main() -> None:
             break
         total = sum(choice.values())
         row = [i + 1, choice_buy] + [
-            "%s (%.2f%%)" % (choice.get(k, "-"), choice.get(k, 0) / total * 100)
+            "{} ({:.2f}%)".format(choice.get(k, "-"), choice.get(k, 0) / total * 100)
             for k in sorted(TARGET, key=lambda k: TARGET[k], reverse=True)
         ]
         rows.append(row)
