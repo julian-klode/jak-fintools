@@ -2,5 +2,12 @@ dist: bionic
 language: python
 install:
   - pip install pre-commit
-script:
-  - pre-commit run -a
+jobs:
+  include:
+    - name: pre-commit
+      script:
+      - pre-commit run -a
+    - name: run code
+      script:
+      - pip install -r requirements.txt
+      - python3 ./advisor.py
