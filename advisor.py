@@ -1,10 +1,8 @@
 #!/usr/bin/python3
 import itertools
-import decimal
 import math
 import typing
 from tabulate import tabulate
-import collections
 
 
 class Position(typing.NamedTuple):
@@ -82,7 +80,6 @@ def buy(values: Allocation, etfs: typing.Iterable[str], value: float) -> Allocat
 
 
 def main() -> None:
-    value = 0
     invest = 1000
     rounds = 100
     num_transactions = 1
