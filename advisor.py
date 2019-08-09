@@ -2,6 +2,7 @@
 import itertools
 import math
 import typing
+
 from tabulate import tabulate
 
 
