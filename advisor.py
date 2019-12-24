@@ -24,19 +24,23 @@ TARGET = {
 Allocation = typing.NewType("Allocation", typing.Dict[str, float])
 
 
-def is_valid(allocation: Allocation) -> bool:
+def validity_score(allocation: Allocation) -> int:
     """Check if an allocation is valid.
 
     An allocation is considered valid if each of its positions is within its
     specified range.
+
+    :returns: the number of limits violated.
     """
     total = sum(allocation.values())
+    diff = 0
     for name, value in allocation.items():
         position = TARGET[name]
         percentage = value / total * 100
-        if percentage > position.max or percentage < position.min:
-            return False
-    return True
+        diff += int(percentage > position.max)
+        diff += int(percentage < position.min)
+
+    return diff
 
 
 def calculate_distance(allocation: Allocation) -> float:
@@ -103,10 +107,13 @@ def main() -> None:
         ]
         choice_buy, choice = min(
             choices,
-            key=lambda choice: (not is_valid(choice[1]), calculate_distance(choice[1])),
+            key=lambda choice: (
+                validity_score(choice[1]),
+                calculate_distance(choice[1]),
+            ),
         )
 
-        if not is_valid(choice):
+        if validity_score(choice) != 0:
             print("ERROR: Cannot proceed at iteration {}, no valid choices", i)
 
         if values == choice:
