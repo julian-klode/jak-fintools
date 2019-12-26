@@ -19,7 +19,12 @@ import typing
 from contextlib import contextmanager
 
 import bs4  # type: ignore
-import notmuch  # type: ignore
+
+try:
+    import notmuch  # type: ignore
+except ImportError as exc:
+    _nm_exc = exc  # pylint: disable=invalid-name
+    notmuch = None
 
 CACHE_PATH = os.path.expanduser("~/.cache/mintos.pickle")
 CACHE_VERSION = 1
@@ -28,6 +33,14 @@ CacheType = typing.Dict[str, typing.Tuple[datetime.date, decimal.Decimal]]
 
 def iter_email_paths() -> typing.Iterator[str]:
     """Iterate over paths of matching emails."""
+    if len(sys.argv) > 0:
+        yield from sys.argv[1:]
+    if notmuch is None:
+        print(
+            f"E: No files specified on command-line and could not import notmuch: {_nm_exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     database = notmuch.Database()
     query = notmuch.Query(database, "from:mintos tägliche")
     query.set_sort(notmuch.Query.SORT.OLDEST_FIRST)  # pylint: disable=no-member
