@@ -96,8 +96,7 @@ def main() -> None:
     values = Allocation({})
     etfs = set(TARGET.keys())
     rows: typing.List[typing.Iterable[object]] = [
-        ["iteration", "buy"]
-        + [k for k in sorted(TARGET, key=lambda k: TARGET[k].tgt, reverse=True)]
+        ["iteration", "buy"] + sorted(TARGET, key=lambda k: TARGET[k].tgt, reverse=True)
     ]
 
     for i in range(rounds):
