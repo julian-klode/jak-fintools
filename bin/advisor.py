@@ -1,4 +1,9 @@
 #!/usr/bin/python3
+#
+# Copyright (C) 2019 Julian Andres Klode
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
 """Stupid robo advisor."""
 import itertools
 import math
