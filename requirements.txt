@@ -1,1 +1,3 @@
 tabulate
+bs4
+notmuch
