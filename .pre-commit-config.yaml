@@ -27,7 +27,7 @@ repos:
     rev: v2.4.4
     hooks:
     -   id: pylint
-        additional_dependencies: [tabulate]
+        additional_dependencies: [tabulate, bs4, notmuch]
 
 -   repo: https://github.com/asottile/pyupgrade
     rev: v1.25.2
