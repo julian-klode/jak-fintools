@@ -10,4 +10,4 @@ jobs:
     - name: run advisor
       script:
       - pip install -r requirements.txt
-      - ./bin/advisor.py
+      - python3 ./bin/advisor.py
