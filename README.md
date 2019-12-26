@@ -10,7 +10,10 @@ and then it tells you which transactions to do next.
 
 > bin/import_mintos.py
 
-Produces a .csv file suitable for importing with [portfolio performance](http://portfolio-performance.info/), by reading daily mintos email notifications from your notmuch maildir.
+Processes daily reports from Mintos and generates files in the following formats:
+
+- A CSV file suitable for importing with [portfolio performance](http://portfolio-performance.info/)
+- A journal file suitable for use with ledger/hledger/etc.
 
 
 ## Licensing

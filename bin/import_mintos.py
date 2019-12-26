@@ -8,6 +8,7 @@
 
 This imports interest from daily mintos notification emails stored in a
 notmuch maildir. It only works for German mintos email."""
+import argparse
 import datetime
 import decimal
 import email
@@ -31,10 +32,11 @@ CACHE_VERSION = 1
 CacheType = typing.Dict[str, typing.Tuple[datetime.date, decimal.Decimal]]
 
 
-def iter_email_paths() -> typing.Iterator[str]:
+def iter_email_paths(args: typing.List[str]) -> typing.Iterator[str]:
     """Iterate over paths of matching emails."""
-    if len(sys.argv) > 0:
-        yield from sys.argv[1:]
+    if len(args) > 0:
+        yield from args
+        return
     if notmuch is None:
         print(
             f"E: No files specified on command-line and could not import notmuch: {_nm_exc}",
@@ -95,17 +97,39 @@ def open_cache() -> typing.Iterator[CacheType]:
 
 def main() -> None:
     """Output a CSV for portfolio performance based on mintos daily emails."""
+    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument(
+        "emails", metavar="E", type=str, nargs="*", help="emails to import"
+    )
+    parser.add_argument(
+        "-f",
+        dest="format",
+        choices=["ledger", "csv"],
+        default="csv",
+        help="output format",
+    )
+
+    args = parser.parse_args()
+
     with open_cache() as cache:
-        print("Datum;Wert;Typ")
+        if args.format == "csv":
+            print("Datum;Wert;Typ")
 
         acc = decimal.Decimal(0)
-        for path in iter_email_paths():
+        for path in iter_email_paths(args.emails):
             try:
                 date, value = cache[path]
             except KeyError:
                 date, value = read_email(path)
                 cache[path] = (date, value)
-            print("{};{};Zinsen".format(date, str(value - acc).replace(".", ",")))
+            if args.format == "csv":
+                print("{};{};Zinsen".format(date, str(value - acc).replace(".", ",")))
+            elif args.format == "ledger":
+                print("{} Mintos Zinsen".format(date.strftime("%Y/%m/%d")))
+                increment = value - acc
+                print(f"    income:mintos  -{increment}€")
+                print(f"    assets:bank:savings:mintos  {increment}€")
+                print()
             acc = value
 
 
