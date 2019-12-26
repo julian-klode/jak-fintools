@@ -7,7 +7,7 @@ jobs:
     - name: pre-commit
       script:
       - pre-commit run -a
-    - name: run code
+    - name: run advisor
       script:
       - pip install -r requirements.txt
-      - python3 ./advisor.py
+      - ./bin/advisor.py
