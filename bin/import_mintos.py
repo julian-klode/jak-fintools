@@ -123,7 +123,16 @@ def main() -> None:
                 date, value = read_email(path)
                 cache[path] = (date, value)
             if args.format == "csv":
-                print("{};{};Zinsen".format(date, str(value - acc).replace(".", ",")))
+                if value - acc < 0:
+                    print(
+                        "{};{};Zinsbelastung".format(
+                            date, str(acc - value).replace(".", ",")
+                        )
+                    )
+                else:
+                    print(
+                        "{};{};Zinsen".format(date, str(value - acc).replace(".", ","))
+                    )
             elif args.format == "ledger":
                 print("{} Mintos Zinsen".format(date.strftime("%Y/%m/%d")))
                 increment = value - acc
