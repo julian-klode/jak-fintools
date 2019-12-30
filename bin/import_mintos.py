@@ -136,7 +136,7 @@ def main() -> None:
             elif args.format == "ledger":
                 print("{} Mintos Zinsen".format(date.strftime("%Y/%m/%d")))
                 increment = value - acc
-                print(f"    income:bank:mintos  -{increment}€")
+                print(f"    income:bank:mintos  {-increment}€")
                 print(f"    assets:bank:savings:mintos  {increment}€")
                 print()
             acc = value
