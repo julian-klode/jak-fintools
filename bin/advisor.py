@@ -5,8 +5,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
 """Stupid robo advisor."""
+import argparse
 import itertools
 import math
+import subprocess
 import typing
 
 from tabulate import tabulate
@@ -21,9 +23,15 @@ class Position(typing.NamedTuple):
 
 
 TARGET = {
-    "world": Position(70, 77, 100),
-    "em imi": Position(0, 10, 15),
-    "world sc": Position(0, 13, 15),
+    "world": Position(70, 80, 100),
+    "em imi": Position(8, 10, 12),
+    "world sc": Position(8, 10, 14),
+}
+
+POSITIONS_BY_ISIN = {
+    "IE00B4L5Y983": "world",
+    "IE00BF4RFH31": "world sc",
+    "IE00BKM4GZ66": "em imi",
 }
 
 Allocation = typing.NewType("Allocation", typing.Dict[str, float])
@@ -92,27 +100,67 @@ def buy(values: Allocation, etfs: typing.Iterable[str], value: float) -> Allocat
     return new_values
 
 
+def get_starting_point() -> Allocation:
+    """Return the starting allocation, queried from hledger."""
+    print("Gathering data", end="", flush=True)
+    res = Allocation({})
+
+    for isin, name in POSITIONS_BY_ISIN.items():
+        print(".", end="", flush=True)
+        value_output = int(
+            float(
+                subprocess.getoutput(
+                    f"lxc exec hledger -- sudo -iu ubuntu env -C /home/jak hledger bal -V cur:{isin}"
+                )
+                .splitlines()[-1]
+                .strip()
+                .split()[0]
+                .replace(",", "")
+            )
+        )
+
+        res[name] = value_output
+
+    print("\r", end="")
+    return res
+
+
 def main() -> None:
     """Entry point."""
-    invest = 1000
-    rounds = 100
-    num_transactions = 1
 
-    values = Allocation({})
+    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument("--rounds", dest="rounds", type=int, default=12)
+    parser.add_argument("invest", type=int)
+    parser.add_argument("--min", dest="min", type=int, default=1)
+    parser.add_argument("--max", dest="max", type=int, default=len(POSITIONS_BY_ISIN))
+    args = parser.parse_args()
+
+    values = get_starting_point()
     etfs = set(TARGET.keys())
     rows: typing.List[typing.Iterable[object]] = [
-        ["iteration", "buy"] + sorted(TARGET, key=lambda k: TARGET[k].tgt, reverse=True)
+        ["iteration", "buy"]
+        + sorted(TARGET, key=lambda k: TARGET[k].tgt, reverse=True),
+        ["start", "-"]
+        + [
+            "{} ({:.2f}%)".format(
+                values.get(k, "-"), values.get(k, 0) / sum(values.values()) * 100
+            )
+            for k in sorted(TARGET, key=lambda k: TARGET[k].tgt, reverse=True)
+        ],
     ]
 
-    for i in range(rounds):
-        choices = [
-            (", ".join(etfs), buy(values, etfs, invest))
-            for etfs in itertools.combinations(sorted(etfs), num_transactions)
-        ]
+    for i in range(args.rounds):
+        choices: typing.List[typing.Tuple[str, Allocation]] = []
+        for this_num_trans in range(args.min, args.max + 1):
+            choices += [
+                (", ".join(etfs), buy(values, etfs, args.invest))
+                for etfs in itertools.combinations(sorted(etfs), this_num_trans)
+            ]
         choice_buy, choice = min(
             choices,
             key=lambda choice: (
                 validity_score(choice[1]),
+                choice[0].count(","),
                 calculate_distance(choice[1]),
             ),
         )
