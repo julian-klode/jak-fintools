@@ -44,7 +44,7 @@ def iter_email_paths(args: typing.List[str]) -> typing.Iterator[str]:
         )
         sys.exit(1)
     database = notmuch.Database()
-    query = notmuch.Query(database, "from:mintos tägliche")
+    query = notmuch.Query(database, "from:mintos subject:tägliche subject:Zusammenfassung")
     query.set_sort(notmuch.Query.SORT.OLDEST_FIRST)  # pylint: disable=no-member
     msgs = query.search_messages()
     for msg in msgs:
@@ -55,11 +55,14 @@ def read_email(path: str) -> typing.Tuple[datetime.date, decimal.Decimal]:
     """Read the email, return a (date, value) tuple"""
     with open(path) as fobj:
         msg = email.message_from_file(fobj, policy=email.policy.default)
-    body: str = msg.get_content()  # type: ignore
 
+    body: str = msg.get_body().get_content()  # type: ignore
     soup = bs4.BeautifulSoup(body, features="lxml")
     table = soup.select('table:contains("Gesamtertrag")')[-1]
-    value = decimal.Decimal(table.select(':contains("€")')[-1].text.strip("€").strip())
+    try:
+        value = decimal.Decimal(table.select(':contains("€")')[-1].text.strip("€").strip())
+    except:
+        value = decimal.Decimal(soup.select(':contains("€")')[-1].text.strip("€").strip())
     date = datetime.datetime.strptime(
         soup.select('td:contains("Endsaldo")')[-1].text.replace("Endsaldo", "").strip(),
         "%d.%m.%Y",
