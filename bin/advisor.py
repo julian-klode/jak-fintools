@@ -23,9 +23,9 @@ class Position(typing.NamedTuple):
 
 
 TARGET = {
-    "world": Position(70, 80, 100),
+    "world": Position(72, 80, 100),
     "em imi": Position(8, 10, 12),
-    "world sc": Position(8, 10, 14),
+    "world sc": Position(8, 10, 12),
 }
 
 POSITIONS_BY_ISIN = {
@@ -115,6 +115,7 @@ def get_starting_point() -> Allocation:
                 .splitlines()[-1]
                 .strip()
                 .split()[0]
+                .rstrip("€")
                 .replace(",", "")
             )
         )
