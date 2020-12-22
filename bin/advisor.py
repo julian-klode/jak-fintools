@@ -14,6 +14,7 @@ import typing
 from tabulate import tabulate
 
 
+# pylint: disable=inherit-non-class,too-few-public-methods
 class Position(typing.NamedTuple):
     """A position in the portfolio."""
 
@@ -24,14 +25,13 @@ class Position(typing.NamedTuple):
 
 TARGET = {
     "world": Position(72, 80, 100),
-    "em imi": Position(8, 10, 12),
-    "world sc": Position(8, 10, 12),
+    "em imi and world sc": Position(16, 20, 24),
 }
 
 POSITIONS_BY_ISIN = {
     "IE00B4L5Y983": "world",
-    "IE00BF4RFH31": "world sc",
-    "IE00BKM4GZ66": "em imi",
+    "IE00BF4RFH31": "em imi and world sc",
+    "IE00BKM4GZ66": "em imi and world sc",
 }
 
 Allocation = typing.NewType("Allocation", typing.Dict[str, float])
@@ -120,7 +120,10 @@ def get_starting_point() -> Allocation:
             )
         )
 
-        res[name] = value_output
+        try:
+            res[name] += value_output
+        except KeyError:
+            res[name] = value_output
 
     print("\r", end="")
     return res

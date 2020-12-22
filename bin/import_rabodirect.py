@@ -25,12 +25,12 @@ def dec(text: str) -> decimal.Decimal:
         return decimal.Decimal(
             text.replace(".", "§").replace(",", ".").replace("§", "")
         )
-    except Exception:
+    except Exception as error:
         raise ValueError(
             "Cannot handle input {} -> {}".format(
                 text, text.replace(".", "§").replace(",", ".").replace("§", ",")
             )
-        )
+        ) from error
 
 
 def get_lines(
@@ -59,6 +59,7 @@ def main(argv: typing.List[str]) -> None:
             stdout=subprocess.PIPE,
             encoding="utf-8",
         ) as proc:
+            assert proc.stdout is not None
             lines = get_lines(proc.stdout, backlog)
             for line in lines:
                 if "Zinszahlung" in line:
@@ -80,6 +81,7 @@ def main(argv: typing.List[str]) -> None:
                         valuta_match[1], "%d.%m.%Y"
                     ).date()
 
+                    # pylint: disable=unused-variable
                     date_, subject, iban, interest_, total_ = match.groups()
                     interest = dec(interest_)
                     date = datetime.datetime.strptime(date_, "%d.%m.%Y").date()

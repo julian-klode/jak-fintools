@@ -1,2 +1,2 @@
 [DEFAULT]
-disable=unsupported-assignment-operation,no-member,bad-continuation,invalid-unary-operand-type,line-too-long,unsubscriptable-object
+disable=unsupported-assignment-operation,no-member,bad-continuation,invalid-unary-operand-type,line-too-long,unsubscriptable-object,duplicate-code
