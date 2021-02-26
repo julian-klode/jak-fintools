@@ -61,9 +61,14 @@ def read_email(path: str) -> typing.Tuple[datetime.date, decimal.Decimal]:
     body: str = msg.get_body().get_content()  # type: ignore
     soup = bs4.BeautifulSoup(body, features="lxml")
     table = soup.select('table:-soup-contains("Gesamtertrag")')[-1]
-    value = decimal.Decimal(
-        table.select(':-soup-contains("€")')[-1].text.strip("€").strip()
-    )
+    try:
+        value = decimal.Decimal(
+            table.select(':-soup-contains("€")')[-1].text.strip("€").strip()
+        )
+    except IndexError:
+        value = decimal.Decimal(
+            soup.select(':-soup-contains("€")')[-1].text.strip("€").strip()
+        )
     date = datetime.datetime.strptime(
         soup.select('td:-soup-contains("Endsaldo")')[-1]
         .text.replace("Endsaldo", "")
