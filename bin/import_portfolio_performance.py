@@ -31,7 +31,7 @@ def parse_pp(path: str) -> None:
         assert prices is not None
         for price in prices:
             date = price.attrib["t"].replace("-", "/")
-            value = decimal.Decimal(price.attrib["v"]) / 10000
+            value = decimal.Decimal(price.attrib["v"]) / 10000 / 10000
 
             print(f'P {date} "{isin}" {value}€')
 
