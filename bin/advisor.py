@@ -25,14 +25,23 @@ class Position(typing.NamedTuple):
 
 TARGET = {
     "world": Position(72, 80, 100),
-    "em imi and world sc": Position(16, 20, 24),
+    "em imi": Position(8, 10, 12),
+    "world sc": Position(8, 10, 12),
 }
 
 POSITIONS_BY_ISIN = {
     "IE00B4L5Y983": "world",
-    "IE00BF4RFH31": "em imi and world sc",
-    "IE00BKM4GZ66": "em imi and world sc",
+    "IE00BF4RFH31": "em imi",
+    "IE00BKM4GZ66": "world sc",
 }
+
+
+# We do not want to make purchases just purely on optimal results but
+# also with some more predictability. Optimally we purchase satellites
+# at the same time or we purchase the core, but we don't want to buy
+# just one satellite or change core and a satellite at the same time
+# if we do not have to.
+CLUSTERS = {"world", "em imi, world sc"}
 
 Allocation = typing.NewType("Allocation", typing.Dict[str, float])
 
@@ -162,6 +171,7 @@ def main() -> None:
             choices,
             key=lambda choice: (
                 validity_score(choice[1]),
+                choice[0] not in CLUSTERS,
                 choice[0].count(","),
                 calculate_distance(choice[1]),
             ),
