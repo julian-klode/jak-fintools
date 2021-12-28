@@ -60,7 +60,9 @@ def read_email(path: str) -> typing.Tuple[datetime.date, decimal.Decimal]:
 
     body: str = msg.get_body().get_content()  # type: ignore
     soup = bs4.BeautifulSoup(body, features="lxml")
-    table = soup.select('table:-soup-contains("Gesamtertrag")')[-1]
+    table = soup.select(
+        ':has(:-soup-contains("€")):has(:-soup-contains("Gesamtertrag"))'
+    )[-1]
     try:
         value = decimal.Decimal(
             table.select(':-soup-contains("€")')[-1].text.strip("€").strip()
@@ -77,6 +79,19 @@ def read_email(path: str) -> typing.Tuple[datetime.date, decimal.Decimal]:
     ).date()
 
     return (date, value)
+
+
+@contextmanager
+def open_atomic_write(path: str, mode: str) -> typing.Iterator[typing.BinaryIO]:
+    """Open file atomically as .new, then rename after write"""
+    try:
+        with open(path + ".new", mode) as fobj:
+            yield fobj  # type: ignore
+    except Exception as exc:
+        os.unlink(path + ".new")
+        raise exc
+    else:
+        os.rename(path + ".new", path)
 
 
 @contextmanager
@@ -97,12 +112,11 @@ def open_cache() -> typing.Iterator[CacheType]:
 
     yield cache
 
-    with open(CACHE_PATH, "wb") as cachef:
+    with open_atomic_write(CACHE_PATH, "wb") as cachef:
         try:
             pickle.dump({"version": CACHE_VERSION, "cache": cache}, cachef)
         except Exception as exc:  # pylint: disable=broad-except
             print(exc, file=sys.stderr)
-            os.unlink(CACHE_PATH)
             sys.exit(1)
 
 

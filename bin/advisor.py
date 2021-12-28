@@ -109,9 +109,7 @@ def get_starting_point() -> Allocation:
         print(".", end="", flush=True)
         value_output = int(
             float(
-                subprocess.getoutput(
-                    f"lxc exec hledger -- sudo -iu ubuntu env -C /home/jak hledger bal -V cur:{isin}"
-                )
+                subprocess.getoutput(f"hledger bal -V cur:{isin}")
                 .splitlines()[-1]
                 .strip()
                 .split()[0]
