@@ -41,7 +41,12 @@ POSITIONS_BY_ISIN = {
 # at the same time or we purchase the core, but we don't want to buy
 # just one satellite or change core and a satellite at the same time
 # if we do not have to.
-CLUSTERS = {"world", "em imi, world sc"}
+PRIORITY = {
+    "world": 0,
+    "em imi, world sc": 0,
+    "em imi": 1,
+    "world sc": 1,
+}
 
 Allocation = typing.NewType("Allocation", typing.Dict[str, float])
 
@@ -171,8 +176,9 @@ def main() -> None:
             choices,
             key=lambda choice: (
                 validity_score(choice[1]),
-                choice[0] not in CLUSTERS,
-                choice[0].count(","),
+                PRIORITY[choice[0]]
+                if choice[0] in PRIORITY
+                else max(PRIORITY.values()) + 1 + choice[0].count(","),
                 calculate_distance(choice[1]),
             ),
         )
