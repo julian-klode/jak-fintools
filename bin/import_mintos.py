@@ -23,8 +23,10 @@ import bs4  # type: ignore
 
 try:
     import notmuch  # type: ignore
-except ImportError as exc:
-    _nm_exc = exc  # pylint: disable=invalid-name
+
+    _nm_exc = None  # pylint: disable=invalid-name
+except ImportError as nm_exc:
+    _nm_exc = nm_exc  # pylint: disable=invalid-name
     notmuch = None
 
 CACHE_PATH = os.path.expanduser("~/.cache/mintos.pickle")
@@ -55,24 +57,28 @@ def iter_email_paths(args: typing.List[str]) -> typing.Iterator[str]:
 
 def read_email(path: str) -> typing.Tuple[datetime.date, decimal.Decimal]:
     """Read the email, return a (date, value) tuple"""
-    with open(path) as fobj:
+    with open(path, encoding="utf-8") as fobj:
         msg = email.message_from_file(fobj, policy=email.policy.default)
 
     body: str = msg.get_body().get_content()  # type: ignore
     soup = bs4.BeautifulSoup(body, features="lxml")
     table = soup.select(
-        ':has(:-soup-contains("€")):has(:-soup-contains("Gesamtertrag"))'
+        ':has(:-soup-contains-own("€")):has(:-soup-contains-own("Gesamtertrag"))'
     )[-1]
     try:
         value = decimal.Decimal(
-            table.select(':-soup-contains("€")')[-1].text.strip("€").strip()
+            table.select(':-soup-contains-own("€"):not(:-soup-contains-own("Bonus"))')[
+                -1
+            ]
+            .text.strip("€")
+            .strip()
         )
     except IndexError:
         value = decimal.Decimal(
-            soup.select(':-soup-contains("€")')[-1].text.strip("€").strip()
+            soup.select(':-soup-contains-own("€")')[-1].text.strip("€").strip()
         )
     date = datetime.datetime.strptime(
-        soup.select('td:-soup-contains("Endsaldo")')[-1]
+        soup.select(':-soup-contains-own("Endsaldo")')[-1]
         .text.replace("Endsaldo", "")
         .strip(),
         "%d.%m.%Y",
@@ -82,11 +88,11 @@ def read_email(path: str) -> typing.Tuple[datetime.date, decimal.Decimal]:
 
 
 @contextmanager
-def open_atomic_write(path: str, mode: str) -> typing.Iterator[typing.BinaryIO]:
+def open_atomic_write(path: str) -> typing.Iterator[typing.BinaryIO]:
     """Open file atomically as .new, then rename after write"""
     try:
-        with open(path + ".new", mode) as fobj:
-            yield fobj  # type: ignore
+        with open(path + ".new", "wb") as fobj:
+            yield fobj
     except Exception as exc:
         os.unlink(path + ".new")
         raise exc
@@ -112,7 +118,7 @@ def open_cache() -> typing.Iterator[CacheType]:
 
     yield cache
 
-    with open_atomic_write(CACHE_PATH, "wb") as cachef:
+    with open_atomic_write(CACHE_PATH) as cachef:
         try:
             pickle.dump({"version": CACHE_VERSION, "cache": cache}, cachef)
         except Exception as exc:  # pylint: disable=broad-except
