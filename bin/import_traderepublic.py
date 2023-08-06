@@ -75,7 +75,8 @@ def main(argv: typing.List[str]) -> None:
                         if word in line:
                             typ = word
                             break
-
+                if "WERTSTELLUNG" in line:
+                    continue
                 if re.match("[0-9]{2}.[0-9]{2}.[0-9]{4}", line) and not date:
                     date = datetime.datetime.strptime(line, "%d.%m.%Y")
                 elif line.startswith("ISIN:") or re.match("^[A-Z0-9]{12}$", line):
